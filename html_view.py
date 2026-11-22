@@ -135,10 +135,11 @@ def render(records: list[dict], title: str, subtitle: str, tz: ZoneInfo,
             target = by_id.get(r["reply_to"])
             if target:
                 snippet = (target.get("clean_content") or target.get("content") or "[attachment]")[:120]
-                reply = (f'<a class="reply" href="#m{target["id"]}"><b>{esc(display_name(target, profiles))}</b> '
-                         f'{esc(snippet)}</a>')
+                reply = (f'<a class="reply" href="#m{target["id"]}"><span class="rtext"><b>'
+                         f'{esc(display_name(target, profiles))}</b> {esc(snippet)}</span></a>')
             elif r.get("reply_to_author"):
-                reply = f'<div class="reply"><b>{esc(r["reply_to_author"])}</b> <i>(not shown here)</i></div>'
+                reply = (f'<div class="reply"><span class="rtext"><b>{esc(r["reply_to_author"])}</b> '
+                         f'<i>(not shown here)</i></span></div>')
 
         continued = (prev is not None and not reply and prev["author_id"] == r["author_id"]
                      and when - prev_time < GROUP_GAP)
@@ -194,8 +195,8 @@ main {{ padding:8px 0 40px; }}
 .text {{ white-space:normal; overflow-wrap:anywhere; }}
 .edited {{ color:var(--muted); font-size:11px; margin-left:4px; }}
 .system {{ color:var(--muted); font-size:14px; padding-top:6px; padding-bottom:6px; }}
-.reply {{ display:block; font-size:13px; color:var(--muted); text-decoration:none; white-space:nowrap;
-  overflow:hidden; text-overflow:ellipsis; position:relative; overflow:visible; }}
+.reply {{ display:block; font-size:13px; color:var(--muted); text-decoration:none; position:relative; }}
+.rtext {{ display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }}
 .reply::before {{ content:""; position:absolute; left:-36px; top:9px; width:30px; height:8px; border:2px solid var(--line);
   border-right:0; border-bottom:0; border-top-left-radius:6px; }}
 .reply b {{ color:var(--fg); opacity:.85; }}

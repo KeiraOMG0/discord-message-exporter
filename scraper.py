@@ -44,7 +44,7 @@ import time
 import webbrowser
 from collections import Counter
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -193,9 +193,9 @@ class Saved:
         """Newest exported message ID. Old folders lack it in meta, so scan their JSON once."""
         if self.meta.get("last_message_id"):
             return int(self.meta["last_message_id"])
-        best = None
         if self.meta.get("_scanned"):
             return None
+        best = None
         for f in self.folder.glob("*.json"):
             if f.name == ".meta.json":
                 continue

@@ -45,19 +45,24 @@ class Viewer:
 
     @web.middleware
     async def errors(self, request, handler):
+        # Only answer requests that are really for this local server: a foreign Host header means DNS
+        # rebinding (another site trying to read your chats), and cross-site fetches are never legitimate.
+        host = request.host.rsplit(":", 1)[0].strip("[]")
+        if host not in ("127.0.0.1", "localhost", "::1") or request.headers.get("Sec-Fetch-Site") == "cross-site":
+            raise web.HTTPForbidden(text="Forbidden")
         try:
             return await handler(request)
         except web.HTTPException:
             raise
-        except (LookupError, discord.NotFound) as e:
-            return page("Not found", f'<div class="empty"><h2>Not found</h2><p>{esc(str(e))}</p>'
-                                     f'<p><a href="/">Back to all chats</a></p></div>', status=404)
-        except discord.Forbidden:
-            return page("No access", '<div class="empty"><h2>No access</h2><p>Your account cannot read that chat.</p>'
-                                     '<p><a href="/">Back to all chats</a></p></div>', status=403)
-        except Exception as e:  # show a readable page instead of a bare 500
-            return page("Error", f'<div class="empty"><h2>Something went wrong</h2><p>{esc(str(e) or type(e).__name__)}</p>'
-                                 f'<p><a href="/">Back to all chats</a></p></div>', status=500)
+        except Exception as e:  # readable pages instead of bare errors
+            if type(e) is LookupError or isinstance(e, discord.NotFound):
+                title, msg, status = "Not found", str(e) or "No such chat.", 404
+            elif isinstance(e, discord.Forbidden):
+                title, msg, status = "No access", "Your account cannot read that chat.", 403
+            else:
+                title, msg, status = "Something went wrong", str(e) or type(e).__name__, 500
+            return page(title, f'<div class="empty"><h2>{esc(title)}</h2><p>{esc(msg)}</p>'
+                               f'<p><a href="/">Back to all chats</a></p></div>', status=status)
 
     async def profile(self, uid: int, fetch: bool = True) -> dict:
         """Live user info (cached). Falls back to an API fetch for users not in the client cache."""
@@ -80,7 +85,7 @@ class Viewer:
         results = await asyncio.gather(*(self.profile(i, fetch) for i in ids))
         return {p["id"]: p for p in results}
 
-    async def target_info(self, tid: int, saved: core.Saved | None = None) -> dict:
+    async def target_info(self, tid: int, saved=None) -> dict:
         """Header info for a chat: title, subtitle, avatar, type."""
         ch = self.client.get_channel(tid)
         if isinstance(ch, discord.DMChannel):

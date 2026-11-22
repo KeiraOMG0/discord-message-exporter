@@ -1,0 +1,7 @@
+config.json
+exports/
+venv/
+__pycache__/
+*.bak
+.venv/
+*.part

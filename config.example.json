@@ -1,0 +1,6 @@
+{
+  "token": "YOUR_DISCORD_TOKEN_HERE",
+  "timezone": "America/New_York",
+  "output_dir": "exports",
+  "media": "images"
+}
